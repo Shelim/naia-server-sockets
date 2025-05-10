@@ -10,6 +10,8 @@ cfg_if! {
     } else {}
 }
 
+pub mod multiple;
+
 pub use inner::{
     AuthReceiver, AuthSender, PacketReceiver, PacketSender, RecvError, SendError, Socket,
 };
