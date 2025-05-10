@@ -72,21 +72,32 @@ impl TransportAuthSender for MultipleAuthSender {
         address: &crate::user::UserAuthAddr,
         identity_token: &naia_shared::IdentityToken,
     ) -> Result<(), SendError> {
+        let mut all_ok = true;
         for target in self.targets.iter() {
-            if let Ok(result) = target.accept(address, identity_token) {
-                return Ok(result);
+            if let Err(_) = target.accept(address, identity_token) {
+                all_ok = false;
             }
         }
-        Err(SendError {})
+        if all_ok {
+            return Ok(());
+        }
+        else {
+            Err(SendError {})
+        }
     }
 
     fn reject(&self, address: &crate::user::UserAuthAddr) -> Result<(), SendError> {
+        let mut all_ok = true;
         for target in self.targets.iter() {
-            if let Ok(result) = target.reject(address) {
-                return Ok(result);
+            if let Err(_) = target.reject(address) {
+                all_ok = false;
             }
         }
-        Err(SendError {})
+        if all_ok {
+            return Ok(());
+        } else {
+            Err(SendError {})
+        }
     }
 }
 
@@ -108,12 +119,22 @@ impl AuthReceiverClone for MultipleAuthReceiver {
 
 impl TransportAuthReceiver for MultipleAuthReceiver {
     fn receive(&mut self) -> Result<Option<(crate::user::UserAuthAddr, &[u8])>, RecvError> {
+        let mut all_ok = true;
         for target in self.targets.iter_mut() {
-            if let Ok(result) = target.receive() {
-                return Ok(result);
+            match target.receive() {
+                Ok(result) => {
+                    if result.is_some() {
+                        return Ok(result);
+                    }
+                },
+                Err(_) => all_ok = false
             }
         }
-        Err(RecvError {})
+        if all_ok {
+            return Ok(None);
+        } else {
+            Err(RecvError {})
+        }
     }
 }
 
@@ -129,12 +150,17 @@ impl MultipleSender {
 
 impl TransportSender for MultipleSender {
     fn send(&self, address: &std::net::SocketAddr, payload: &[u8]) -> Result<(), SendError> {
+        let mut all_ok = true;
         for target in self.targets.iter() {
-            if let Ok(result) = target.send(address, payload) {
-                return Ok(result);
+            if let Err(_) = target.send(address, payload) {
+                all_ok = false;
             }
         }
-        Err(SendError {})
+        if all_ok {
+            return Ok(());
+        } else {
+            Err(SendError {})
+        }
     }
 }
 
